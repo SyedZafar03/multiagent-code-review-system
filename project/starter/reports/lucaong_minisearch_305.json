@@ -1,0 +1,394 @@
+{
+  "pullRequest": {
+    "owner": "lucaong",
+    "repo": "minisearch",
+    "number": 305
+  },
+  "fileReviews": [
+    {
+      "file": "src/MiniSearch.test.js",
+      "codeQuality": {
+        "file": "src/MiniSearch.test.js",
+        "issues": [
+          {
+            "line": 1254,
+            "severity": "low",
+            "category": "best-practice",
+            "description": "Test case uses arrow function callbacks without explicit return types or parameter type hints",
+            "suggestion": "Consider adding JSDoc comments to document the expected structure of the filter callback parameters, e.g., /** @param {{ category: string }} doc */"
+          },
+          {
+            "line": 1257,
+            "severity": "info",
+            "category": "maintainability",
+            "description": "Nested queries structure could benefit from test data constants for better readability and reusability",
+            "suggestion": "Extract the complex query structure into a named constant at the test suite level to improve readability and make it easier to modify test data: const complexFilterQuery = { queries: [...] }"
+          },
+          {
+            "line": 1268,
+            "severity": "low",
+            "category": "maintainability",
+            "description": "Array.map() and sort() chained without intermediate variables makes the assertion harder to debug",
+            "suggestion": "Split into steps for clarity: const categories = results.map(({ category }) => category); const sortedCategories = categories.sort(); expect(sortedCategories).toEqual(['fiction', 'poetry'])"
+          },
+          {
+            "line": 1268,
+            "severity": "medium",
+            "category": "bug-risk",
+            "description": "Using sort() without a comparator function on string array - while it works for simple strings, it mutates the original array and relies on default string sorting behavior",
+            "suggestion": "Use toSorted() if available (ES2023) or make the sort explicit: .sort((a, b) => a.localeCompare(b)) to avoid mutation and make intent clear"
+          },
+          {
+            "line": 1280,
+            "severity": "info",
+            "category": "style",
+            "description": "Whitespace fix is good - trailing whitespace removed",
+            "suggestion": "Consider enabling ESLint with 'no-trailing-spaces' rule to catch these automatically in the future"
+          },
+          {
+            "line": 1389,
+            "severity": "info",
+            "category": "best-practice",
+            "description": "Good change from 'let' to 'const' for reference variable that is never reassigned",
+            "suggestion": "Continue using const by default and only use let when reassignment is necessary. Consider enabling ESLint 'prefer-const' rule"
+          }
+        ],
+        "overallScore": 85,
+        "summary": "The test file changes are generally good quality improvements. The new test case properly validates custom filtering in complex queries with appropriate assertions. The whitespace cleanup and let-to-const change demonstrate attention to code quality. Minor issues include: (1) a sort() call that mutates the array when testing - consider using toSorted() or being explicit about mutation, (2) opportunity to improve readability by extracting complex test data structures, and (3) missing JSDoc for callback parameters. No security vulnerabilities or critical performance issues detected. This is test code with appropriate structure and coverage."
+      },
+      "testCoverage": {
+        "file": "src/MiniSearch.test.js",
+        "hasTests": false,
+        "testFiles": [],
+        "untestedPaths": [],
+        "coverageEstimate": 100,
+        "summary": "This is a test file (MiniSearch.test.js), not a source code file. Test files themselves are typically not tested with additional test files, as they contain test logic rather than production code. The file appears to be a Jest/Vitest test suite for the MiniSearch library, and the recent change adds a new test case 'allows custom filtering of results in complex queries' to verify that custom filters work correctly in complex query scenarios. Test files are verified by running them against the code they test, not by writing tests for the test code itself. If you meant to analyze test coverage for the source file 'src/MiniSearch.js' instead, please provide that file path."
+      },
+      "refactorings": {
+        "file": "src/MiniSearch.test.js",
+        "suggestions": [
+          {
+            "type": "modernize",
+            "location": "Line 1373 (variable declaration in test)",
+            "impact": "low",
+            "description": "Variable declaration changed from 'let' to 'const' for a reference variable that is never reassigned, improving code clarity and preventing accidental mutations.",
+            "before": "let reference = ms.search({\n  queries: [\n    { fields: ['text'], queries: ['vita'] },\n    { fields: ['title'], queries: ['promessi'] }\n  ]\n});",
+            "after": "const reference = ms.search({\n  queries: [\n    { fields: ['text'], queries: ['vita'] },\n    { fields: ['title'], queries: ['promessi'] }\n  ]\n});",
+            "benefits": "Using 'const' for variables that are never reassigned makes the code's intent clearer, prevents accidental reassignment bugs, and follows modern JavaScript best practices. This is a low-risk change that improves code quality without affecting behavior."
+          },
+          {
+            "type": "simplify",
+            "location": "Line 1263 (trailing whitespace cleanup)",
+            "impact": "low",
+            "description": "Removed trailing whitespace after 'ms.addAll(documents)' statement, cleaning up unnecessary whitespace that can cause formatting issues in version control.",
+            "before": "ms.addAll(documents)\n    ",
+            "after": "ms.addAll(documents)",
+            "benefits": "Removing trailing whitespace prevents git diff noise, avoids potential linting errors, and maintains consistent code formatting across the file. This is a trivial but worthwhile cleanup."
+          },
+          {
+            "type": "modernize",
+            "location": "Lines 1254-1268 (new test case structure)",
+            "impact": "medium",
+            "description": "The new test case demonstrates good test structure with nested query objects and proper assertions, but could benefit from extracting magic values into named constants for better readability and maintainability.",
+            "before": "it('allows custom filtering of results in complex queries', () => {\n  const results = ms.search({\n    queries: [\n      {\n        queries: ['del'],\n        filter: ({ category }) => category === 'poetry'\n      },\n      {\n        queries: ['como'],\n        filter: ({ category }) => category === 'fiction'\n      }\n    ]\n  })\n  expect(results.length).toBe(2)\n  expect(results.map(({ category }) => category).sort()).toEqual(['fiction', 'poetry'])\n})",
+            "after": "it('allows custom filtering of results in complex queries', () => {\n  const EXPECTED_RESULT_COUNT = 2;\n  const EXPECTED_CATEGORIES = ['fiction', 'poetry'];\n  \n  const results = ms.search({\n    queries: [\n      {\n        queries: ['del'],\n        filter: ({ category }) => category === 'poetry'\n      },\n      {\n        queries: ['como'],\n        filter: ({ category }) => category === 'fiction'\n      }\n    ]\n  })\n  \n  expect(results.length).toBe(EXPECTED_RESULT_COUNT)\n  expect(results.map(({ category }) => category).sort()).toEqual(EXPECTED_CATEGORIES)\n})",
+            "benefits": "Extracting magic numbers and expected values into named constants makes the test's intent more explicit, improves readability, and makes it easier to update test expectations if requirements change. The constants serve as inline documentation explaining what the test validates."
+          }
+        ],
+        "summary": "The file shows good modern JavaScript practices with minimal refactoring needed. The main improvements are: (1) consistent use of 'const' over 'let' for non-reassigned variables (already applied at line 1373), (2) removal of trailing whitespace (already applied at line 1263), and (3) opportunity to extract magic values in the new test case into named constants for improved readability. No dead code detected in the visible portions. The changes demonstrate progressive modernization of the test suite with proper use of destructuring and arrow functions."
+      }
+    },
+    {
+      "file": "src/MiniSearch.ts",
+      "codeQuality": {
+        "file": "src/MiniSearch.ts",
+        "issues": [
+          {
+            "line": 1708,
+            "severity": "medium",
+            "category": "performance",
+            "description": "Filter function applied after combining results requires reconstructing full result objects via makeResult() for each document, which may be expensive for large result sets",
+            "suggestion": "Consider tracking whether a filter was applied at the sub-query level and only reconstruct results when necessary, or document the performance trade-off when using QueryCombination-level filters"
+          },
+          {
+            "line": 1710,
+            "severity": "low",
+            "category": "performance",
+            "description": "Iterating over combined results and modifying the Map while iterating could have performance implications for large datasets",
+            "suggestion": "Consider collecting docIds to delete first, then deleting them in a second pass to avoid potential iterator invalidation issues: const toDelete = []; for (const [docId, rawValue] of combined) { if (!options.filter(result)) toDelete.push(docId); } toDelete.forEach(id => combined.delete(id));"
+          },
+          {
+            "line": 1705,
+            "severity": "low",
+            "category": "maintainability",
+            "description": "Setting filter to undefined in options spread is subtle and may be unclear to future maintainers why this is necessary",
+            "suggestion": "Add an inline comment explaining why filter is set to undefined: const options = { ...searchOptions, filter: undefined, /* prevent filter from being passed to sub-queries */ ...query, queries: undefined }"
+          },
+          {
+            "line": 1708,
+            "severity": "low",
+            "category": "bug-risk",
+            "description": "The filter is stored in 'options.filter' but 'options' is created by spreading 'query', which could potentially override the filter even after it was set to undefined",
+            "suggestion": "Ensure the filter property from query takes precedence by restructuring: const { filter, queries, ...queryOptions } = query; const options = { ...searchOptions, ...queryOptions }; This makes it clearer that the QueryCombination-level filter is intentionally separated"
+          },
+          {
+            "line": 1711,
+            "severity": "medium",
+            "category": "security",
+            "description": "User-provided filter function is called with a result object that includes stored fields via Object.assign, potentially exposing internal data structures if the filter function is malicious or logs the entire object",
+            "suggestion": "Document that filter functions should be trusted and should not serialize or expose the full result object. Consider adding a note in JSDoc about the security implications of user-provided filter functions"
+          },
+          {
+            "line": 1961,
+            "severity": "low",
+            "category": "bug-risk",
+            "description": "this._documentIds.get(docId) may return undefined if docId is invalid, but the return type SearchResult expects id to be defined",
+            "suggestion": "Add a runtime check or null assertion: const id = this._documentIds.get(docId); if (id === undefined) throw new Error(`Document ID ${docId} not found`); or ensure the caller guarantees valid docIds"
+          },
+          {
+            "line": 1966,
+            "severity": "low",
+            "category": "maintainability",
+            "description": "Object.assign is used to mutate the result object with stored fields, which makes the data flow less explicit and harder to trace",
+            "suggestion": "Use object spread for immutability and clarity: return { id: this._documentIds.get(docId), score: score * quality, terms: Object.keys(match), queryTerms: terms, match, ...this._storedFields.get(docId) }"
+          },
+          {
+            "line": 1963,
+            "severity": "info",
+            "category": "maintainability",
+            "description": "The quality calculation 'terms.length || 1' uses a fallback that may not be immediately obvious to readers",
+            "suggestion": "Add a comment explaining why quality defaults to 1 when terms.length is 0: const quality = terms.length || 1; // default to 1 when no terms matched (e.g., wildcard query)"
+          },
+          {
+            "line": 1708,
+            "severity": "low",
+            "category": "best-practice",
+            "description": "The filter logic checks 'options.filter' existence but doesn't validate it's a function before calling it",
+            "suggestion": "Add a type guard: if (typeof options.filter === 'function') { ... } to prevent runtime errors if filter is truthy but not callable"
+          },
+          {
+            "line": 1305,
+            "severity": "low",
+            "category": "style",
+            "description": "Documentation example shows 'queries: ['motorcycle art']' with a single-element array, which may confuse readers expecting multiple queries",
+            "suggestion": "Use a more realistic example with multiple query strings: queries: ['motorcycle', 'art'] or explain that this is a sub-query that itself gets tokenized"
+          }
+        ],
+        "overallScore": 72,
+        "summary": "The patch adds filtering support for sub-queries with generally sound implementation. Key concerns: (1) Performance impact of reconstructing result objects during filtering at the QueryCombination level - this happens after results are combined, requiring makeResult() calls for potentially large result sets. (2) The filter property handling in options spread could be clearer with better variable destructuring. (3) Minor security consideration around exposing stored fields to user-provided filter functions. (4) Object.assign mutation in makeResult() reduces code clarity. The refactoring to extract makeResult() is good for DRY principles, but some edge cases (undefined docId) and type safety could be improved. Documentation improvements are helpful but one example could be clearer. No critical security vulnerabilities, but medium performance considerations for high-volume scenarios."
+      },
+      "testCoverage": {
+        "file": "src/MiniSearch.ts",
+        "hasTests": false,
+        "testFiles": [],
+        "untestedPaths": [
+          {
+            "type": "function",
+            "location": "makeResult (lines 1956-1976)",
+            "priority": "high",
+            "reasoning": "This new private method encapsulates critical result construction logic including score calculation with quality multiplier, term matching, and stored field assignment. Any bugs here affect all search results.",
+            "suggestedTest": "test('makeResult creates correct result structure', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['category'] });\n  miniSearch.add({ id: 1, title: 'test', category: 'fiction' });\n  const rawValue = { score: 10, terms: ['test', 'query'], match: { test: ['title'] } };\n  const result = miniSearch['makeResult'](0, rawValue);\n  expect(result).toMatchObject({\n    id: 1,\n    score: 20,\n    terms: ['test'],\n    queryTerms: ['test', 'query'],\n    category: 'fiction'\n  });\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "makeResult with empty terms array (line 1964)",
+            "priority": "high",
+            "reasoning": "The quality calculation uses 'terms.length || 1' to avoid zero quality. This edge case needs verification to ensure score calculation handles empty terms correctly.",
+            "suggestedTest": "test('makeResult handles empty terms array', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'] });\n  miniSearch.add({ id: 1, title: 'test' });\n  const rawValue = { score: 10, terms: [], match: { test: ['title'] } };\n  const result = miniSearch['makeResult'](0, rawValue);\n  expect(result.score).toBe(10);\n  expect(result.queryTerms).toEqual([]);\n});"
+          },
+          {
+            "type": "function",
+            "location": "executeQuery with QueryCombination-level filter (lines 1707-1715)",
+            "priority": "critical",
+            "reasoning": "This implements the core new feature allowing filters on intermediate sub-query results. The filter is applied after combination but must correctly construct results via makeResult before filtering. Incorrect implementation could leak unfiltered data.",
+            "suggestedTest": "test('executeQuery applies filter at QueryCombination level', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['category'] });\n  miniSearch.add({ id: 1, title: 'motorcycle art', category: 'fiction' });\n  miniSearch.add({ id: 2, title: 'abstract art', category: 'history' });\n  const results = miniSearch.executeQuery({\n    combineWith: 'OR',\n    queries: ['art'],\n    filter: (result) => result.category === 'fiction'\n  }, {});\n  expect(results.size).toBe(1);\n  expect(results.has(0)).toBe(true);\n});"
+          },
+          {
+            "type": "branch",
+            "location": "executeQuery filter application conditional (line 1710)",
+            "priority": "high",
+            "reasoning": "The filter is only applied when options.filter exists. Both branches (with and without filter) need testing to ensure combined results are correctly returned in both cases.",
+            "suggestedTest": "test('executeQuery returns unfiltered results when no filter provided', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'] });\n  miniSearch.add({ id: 1, title: 'test one' });\n  miniSearch.add({ id: 2, title: 'test two' });\n  const results = miniSearch.executeQuery({\n    combineWith: 'OR',\n    queries: ['test']\n  }, {});\n  expect(results.size).toBe(2);\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "executeQuery filter excludes all results",
+            "priority": "medium",
+            "reasoning": "When a filter excludes all documents from combined results, the method should return an empty Map without errors.",
+            "suggestedTest": "test('executeQuery handles filter that excludes all results', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['category'] });\n  miniSearch.add({ id: 1, title: 'art', category: 'fiction' });\n  const results = miniSearch.executeQuery({\n    combineWith: 'OR',\n    queries: ['art'],\n    filter: (result) => result.category === 'nonexistent'\n  }, {});\n  expect(results.size).toBe(0);\n});"
+          },
+          {
+            "type": "function",
+            "location": "search method with refactored makeResult call (lines 1386-1410)",
+            "priority": "high",
+            "reasoning": "The search method now delegates result creation to makeResult. This refactoring must preserve existing behavior while working correctly with the filter option.",
+            "suggestedTest": "test('search uses makeResult and applies filter correctly', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['category'] });\n  miniSearch.add({ id: 1, title: 'test', category: 'fiction' });\n  miniSearch.add({ id: 2, title: 'test', category: 'history' });\n  const results = miniSearch.search('test', {\n    filter: (result) => result.category === 'fiction'\n  });\n  expect(results).toHaveLength(1);\n  expect(results[0].id).toBe(1);\n});"
+          },
+          {
+            "type": "branch",
+            "location": "options.filter override in executeQuery (line 1705)",
+            "priority": "critical",
+            "reasoning": "The code sets 'filter: undefined' when merging options to prevent outer filters from applying to inner queries. This must be tested to ensure filter isolation between query levels.",
+            "suggestedTest": "test('executeQuery does not apply outer filter to sub-queries', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['category'] });\n  miniSearch.add({ id: 1, title: 'motorcycle art', category: 'fiction' });\n  miniSearch.add({ id: 2, title: 'abstract art', category: 'history' });\n  const results = miniSearch.search({\n    combineWith: 'OR',\n    queries: [\n      { queries: ['motorcycle'], filter: (r) => r.category === 'fiction' },\n      { queries: ['abstract'], filter: (r) => r.category === 'history' }\n    ]\n  });\n  expect(results).toHaveLength(2);\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Nested QueryCombination with multiple filter levels",
+            "priority": "high",
+            "reasoning": "The documentation shows filters at sub-query level. Complex nested queries with filters at different levels could expose bugs in filter scoping and application order.",
+            "suggestedTest": "test('handles nested QueryCombination with filters at multiple levels', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['category'] });\n  miniSearch.add({ id: 1, title: 'art book', category: 'fiction' });\n  miniSearch.add({ id: 2, title: 'art history', category: 'history' });\n  const results = miniSearch.search({\n    combineWith: 'AND',\n    queries: [{\n      combineWith: 'OR',\n      queries: ['art', 'book'],\n      filter: (r) => r.category === 'fiction'\n    }]\n  });\n  expect(results).toHaveLength(1);\n  expect(results[0].category).toBe('fiction');\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "makeResult with missing stored fields",
+            "priority": "medium",
+            "reasoning": "Object.assign with _storedFields.get(docId) could fail if stored fields are missing or undefined. Should gracefully handle this case.",
+            "suggestedTest": "test('makeResult handles missing stored fields', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'] });\n  miniSearch.add({ id: 1, title: 'test' });\n  const rawValue = { score: 10, terms: ['test'], match: { test: ['title'] } };\n  const result = miniSearch['makeResult'](0, rawValue);\n  expect(result.id).toBe(1);\n  expect(result.score).toBe(10);\n});"
+          },
+          {
+            "type": "branch",
+            "location": "executeQuery combined results Map modification (line 1713)",
+            "priority": "high",
+            "reasoning": "The filter deletes entries from the combined Map. Must verify this mutation doesn't affect other references to the same Map and correctly removes all filtered items.",
+            "suggestedTest": "test('executeQuery filter correctly removes entries from combined Map', () => {\n  const miniSearch = new MiniSearch({ fields: ['title'], storeFields: ['score'] });\n  miniSearch.add({ id: 1, title: 'test', score: 5 });\n  miniSearch.add({ id: 2, title: 'test', score: 3 });\n  const results = miniSearch.executeQuery({\n    combineWith: 'OR',\n    queries: ['test'],\n    filter: (r) => r.score > 4\n  }, {});\n  expect(results.size).toBe(1);\n  const remaining = Array.from(results.keys());\n  expect(remaining).toContain(0);\n  expect(remaining).not.toContain(1);\n});"
+          }
+        ],
+        "coverageEstimate": 0,
+        "summary": "The file src/MiniSearch.ts has no test coverage. The changes introduce 3 critical areas requiring testing: (1) the new makeResult method that consolidates result construction logic, (2) QueryCombination-level filtering that applies filters to intermediate results, and (3) filter isolation ensuring outer filters don't leak into sub-queries. The most critical untested path is the filter application at the QueryCombination level (lines 1707-1715), as incorrect filtering could leak sensitive data or return incorrect results. The makeResult refactoring is high priority because any bugs affect all search operations. Special attention needed for edge cases: empty terms arrays, filters that exclude all results, nested combinations with multiple filter levels, and proper Map mutation during filtering. Estimated 10 specific test cases needed to cover new functionality and critical edge cases."
+      },
+      "refactorings": {
+        "file": "src/MiniSearch.ts",
+        "suggestions": [
+          {
+            "type": "simplify",
+            "location": "executeQuery method, lines 1705-1715",
+            "impact": "medium",
+            "description": "The filter application logic in executeQuery creates a result object just to filter it, then discards it. This is inefficient when filters reject many documents.",
+            "before": "const combined = this.combineResults(results, options.combineWith)\n\n// apply QueryCombination-level filter\nif (options.filter) {\n  for (const [docId, rawValue] of combined) {\n    const result = this.makeResult(docId, rawValue)\n    if (!options.filter(result)) combined.delete(docId)\n  }\n}\n\nreturn combined",
+            "after": "const combined = this.combineResults(results, options.combineWith)\n\n// apply QueryCombination-level filter\nif (options.filter) {\n  const toDelete: number[] = []\n  for (const [docId, rawValue] of combined) {\n    const result = this.makeResult(docId, rawValue)\n    if (!options.filter(result)) toDelete.push(docId)\n  }\n  toDelete.forEach(docId => combined.delete(docId))\n}\n\nreturn combined",
+            "benefits": "Avoids mutation during iteration which can have unpredictable behavior in some JavaScript engines. Collects deletions first, then applies them, making the intent clearer and more maintainable."
+          },
+          {
+            "type": "extract-function",
+            "location": "executeQuery method, lines 1705-1715",
+            "impact": "medium",
+            "description": "The filter application logic is duplicated conceptually between the top-level search method (lines 1386-1390) and executeQuery (lines 1708-1713). Extract into a reusable helper.",
+            "before": "if (options.filter) {\n  for (const [docId, rawValue] of combined) {\n    const result = this.makeResult(docId, rawValue)\n    if (!options.filter(result)) combined.delete(docId)\n  }\n}",
+            "after": "if (options.filter) {\n  this.applyFilter(combined, options.filter)\n}\n\n// Add new private method:\nprivate applyFilter(results: Map<number, RawResultValue>, filter: (result: SearchResult) => boolean): void {\n  const toDelete: number[] = []\n  for (const [docId, rawValue] of results) {\n    const result = this.makeResult(docId, rawValue)\n    if (!filter(result)) toDelete.push(docId)\n  }\n  toDelete.forEach(docId => results.delete(docId))\n}",
+            "benefits": "Reduces code duplication, centralizes filter logic for easier maintenance and testing, and provides a single point to optimize filter performance if needed in the future."
+          },
+          {
+            "type": "modernize",
+            "location": "search method, lines 1386-1390",
+            "impact": "low",
+            "description": "The search method builds results array with explicit push in a loop. Modern array methods would be more idiomatic.",
+            "before": "const results = []\n\nfor (const [docId, rawValue] of rawResults) {\n  const result = this.makeResult(docId, rawValue)\n  if (searchOptionsWithDefaults.filter == null || searchOptionsWithDefaults.filter(result)) {\n    results.push(result)\n  }\n}",
+            "after": "const results = Array.from(rawResults.entries())\n  .map(([docId, rawValue]) => this.makeResult(docId, rawValue))\n  .filter(result => searchOptionsWithDefaults.filter == null || searchOptionsWithDefaults.filter(result))",
+            "benefits": "More declarative and functional style that clearly separates transformation (map) from filtering. Easier to read and understand the data flow. Reduces intermediate variables and manual array management."
+          },
+          {
+            "type": "simplify",
+            "location": "executeQuery method, line 1705",
+            "impact": "low",
+            "description": "The options spreading pattern sets filter to undefined explicitly, which is unnecessary since undefined is the default when a property is missing.",
+            "before": "const options = { ...searchOptions, filter: undefined, ...query, queries: undefined }",
+            "after": "const options = { ...searchOptions, ...query, queries: undefined }\nif (query.filter === undefined) delete options.filter",
+            "benefits": "Makes the intent clearer: we want to separate the query-level filter from sub-query filters. The explicit delete when query.filter is undefined prevents inherited filters from leaking into sub-queries unintentionally."
+          },
+          {
+            "type": "simplify",
+            "location": "makeResult method, line 1964",
+            "impact": "low",
+            "description": "The quality calculation uses '|| 1' pattern which obscures the intent. Terms length should never be zero for a match, making this a defensive check that hides a potential bug.",
+            "before": "const quality = terms.length || 1",
+            "after": "// Quality is the number of matched query terms, minimum 1 for relevance scoring\nconst quality = Math.max(terms.length, 1)",
+            "benefits": "Math.max makes the intent explicit: we're enforcing a minimum value. The comment explains why quality has a minimum of 1. This pattern is clearer for future maintainers and handles edge cases more explicitly."
+          }
+        ],
+        "summary": "Analyzed the MiniSearch.ts filtering implementation. Found 5 refactoring opportunities: DRY violation between search and executeQuery filter logic that should be extracted into applyFilter helper, inefficient map mutation during iteration that should collect deletions first, modernization opportunity to use declarative array methods instead of imperative loops, unclear options spreading that should explicitly delete inherited filters, and quality calculation that would benefit from Math.max for clarity. The makeResult extraction (lines 1956-1976) is already well-done and eliminates duplication effectively."
+      }
+    }
+  ],
+  "summary": {
+    "totalFiles": 2,
+    "overallScore": 78,
+    "criticalIssues": 0,
+    "highPriorityTests": 12,
+    "refactoringOpportunities": 8
+  },
+  "recommendations": [
+    {
+      "priority": "critical",
+      "category": "Test Coverage",
+      "description": "Add comprehensive tests for the new QueryCombination-level filtering feature. The filter isolation logic (preventing outer filters from leaking to sub-queries) and the filter application on combined results are critical paths that could leak unfiltered data if broken.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "Test Coverage",
+      "description": "Add unit tests for the new makeResult() private method, including edge cases with empty terms arrays and missing stored fields. This method affects all search results and any bugs would be widespread.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "Performance",
+      "description": "Consider optimizing the QueryCombination-level filter implementation. Currently it reconstructs full result objects via makeResult() for every document just to filter them, which may be expensive for large result sets. Consider lazy evaluation or tracking which fields the filter actually uses.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "Code Quality",
+      "description": "Avoid mutating the combined Map while iterating over it in the filter application. Collect docIds to delete first, then delete them in a second pass to prevent potential iterator invalidation issues and make the code more maintainable.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "category": "Security",
+      "description": "Document security implications of user-provided filter functions. Filters receive result objects with all stored fields via Object.assign, potentially exposing internal data if the filter is malicious or logs objects. Add JSDoc warning that filter functions must be trusted.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "category": "Refactoring",
+      "description": "Extract the duplicated filter application logic into a reusable applyFilter() private method. The same pattern appears in both the search() method and executeQuery(), violating DRY principles and making maintenance harder.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "category": "Code Quality",
+      "description": "Improve clarity of the options spread pattern in executeQuery. The 'filter: undefined' assignment is subtle - add an inline comment explaining why this prevents filters from being passed to sub-queries, or restructure using destructuring for better clarity.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "low",
+      "category": "Test Quality",
+      "description": "In the new test case for complex query filtering, avoid using Array.sort() without a comparator, which mutates the array and relies on default sorting. Use toSorted() (ES2023) or provide an explicit comparator: .sort((a, b) => a.localeCompare(b)).",
+      "files": [
+        "src/MiniSearch.test.js"
+      ]
+    }
+  ],
+  "metadata": {
+    "analyzedAt": "2026-09-25T00:00:00.000Z",
+    "duration": 45000,
+    "agentVersions": {
+      "code-quality-analyzer": "1.0.0",
+      "test-coverage-analyzer": "1.0.0",
+      "refactoring-suggester": "1.0.0"
+    }
+  }
+}

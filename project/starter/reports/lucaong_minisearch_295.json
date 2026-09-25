@@ -1,0 +1,264 @@
+{
+  "pullRequest": {
+    "owner": "lucaong",
+    "repo": "minisearch",
+    "number": 295
+  },
+  "fileReviews": [
+    {
+      "file": "src/MiniSearch.ts",
+      "codeQuality": {
+        "file": "src/MiniSearch.ts",
+        "issues": [
+          {
+            "line": 52,
+            "severity": "medium",
+            "category": "maintainability",
+            "description": "The @default JSDoc annotations document default values (0.45 and 0.375) but these defaults are defined elsewhere in the code (defaultSearchOptions.weights), creating two sources of truth that can become inconsistent.",
+            "suggestion": "Remove the @default annotations from the type definition and document the defaults only where they are actually defined (in defaultSearchOptions). Alternatively, use the JSDoc values as the single source of truth by referencing them in the default object initialization."
+          },
+          {
+            "line": 1709,
+            "severity": "low",
+            "category": "best-practice",
+            "description": "The destructuring pattern with default parameters (fuzzy: fuzzyWeight = defaultSearchOptions.weights.fuzzy) is more verbose than the previous spread operator approach and doesn't provide significant benefits in this context.",
+            "suggestion": "Consider keeping the spread operator approach for cleaner code: const { fuzzy: fuzzyWeight, prefix: prefixWeight } = { ...defaultSearchOptions.weights, ...weights }. The original pattern is idiomatic JavaScript and handles the merge elegantly."
+          },
+          {
+            "line": 1711,
+            "severity": "medium",
+            "category": "bug-risk",
+            "description": "The new implementation using weights || {} means that if weights is explicitly set to an empty object {}, it will use defaults. However, if weights is {fuzzy: 0, prefix: 0} (legitimate zero values), the zeros will be used. This creates inconsistent behavior where {} uses defaults but {fuzzy: 0} does not, which may not be the intended design.",
+            "suggestion": "Use nullish coalescing for more precise handling: const { fuzzy: fuzzyWeight = defaultSearchOptions.weights.fuzzy, prefix: prefixWeight = defaultSearchOptions.weights.prefix } = weights ?? {}. This only applies defaults when weights is null/undefined, not for empty objects."
+          },
+          {
+            "line": 1709,
+            "severity": "low",
+            "category": "performance",
+            "description": "Each destructuring now involves two property accesses to defaultSearchOptions.weights (one for fuzzy, one for prefix) instead of a single spread operation. While negligible in most cases, this could be a minor performance regression in hot code paths.",
+            "suggestion": "If this code is performance-critical, consider extracting the defaults to local constants: const defaultFuzzy = defaultSearchOptions.weights.fuzzy; const defaultPrefix = defaultSearchOptions.weights.prefix; then use these in the destructuring defaults."
+          },
+          {
+            "line": 52,
+            "severity": "info",
+            "category": "maintainability",
+            "description": "Making fuzzy and prefix optional in the type definition improves type safety by allowing partial weights objects like {fuzzy: 0.5} without requiring prefix to be specified. This is a positive change.",
+            "suggestion": "Document this intentional API change in a CHANGELOG or migration guide so users understand they can now provide partial weights objects."
+          },
+          {
+            "line": 1709,
+            "severity": "low",
+            "category": "style",
+            "description": "The destructuring statement spans multiple lines (1709-1711) which is fine, but the formatting could be more consistent with the rest of the codebase.",
+            "suggestion": "Ensure the multi-line destructuring follows the project's style guide. Consider: const { fuzzy: fuzzyWeight = defaultSearchOptions.weights.fuzzy, prefix: prefixWeight = defaultSearchOptions.weights.prefix } = weights || {} on a single line if it fits within the line length limit."
+          }
+        ],
+        "overallScore": 78,
+        "summary": "The changes improve type safety by making weight properties optional, but introduce maintainability concerns with duplicated default value documentation. The refactored destructuring pattern is more vkeeping the original spread operator approach or using nullish coalescing (??) instead of logical OR (||)."
+      },
+      "testCoverage": {
+        "file": "src/MiniSearch.ts",
+        "hasTests": false,
+        "testFiles": [],
+        "untestedPaths": [
+          {
+            "type": "branch",
+            "location": "Line 1709-1712: weights destructuring with undefined weights object",
+            "priority": "high",
+            "reasoning": "The new implementation changes from spread operators to explicit default assignment with 'weights || {}'. This introduces a critical branch where weights could be undefined, null, or an empty object. Without tests, we cannot verify that the fallback to defaultSearchOptions.weights works correctly in all cases.",
+            "suggestedTest": "test('should use default weights when weights is undefined', () => {\n  const options = { /* other options without weights */ };\n  const result = miniSearch.search('query', options);\n  // Verify that fuzzyWeight = 0.45 and prefixWeight = 0.375 are used\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "branch",
+            "location": "Line 1709-1712: weights destructuring with only fuzzy defined",
+            "priority": "high",
+            "reasoning": "With the new optional properties in the weights object, a user could provide { fuzzy: 0.5 } without providing prefix. The default parameter assignment should use defaultSearchOptions.weights.prefix (0.375) for the missing property. This is a key behavior change that must be tested.",
+            "suggestedTest": "test('should use default prefix weight when only fuzzy is provided', () => {\n  const options = { weights: { fuzzy: 0.8 } };\n  const result = miniSearch.search('query', options);\n  // Verify fuzzyWeight = 0.8 and prefixWeight = 0.375 (default)\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "branch",
+            "location": "Line 1709-1712: weights destructuring with only prefix defined",
+            "priority": "high",
+            "reasoning": "Similar to the fuzzy-only case, users should be able to provide { prefix: 0.6 } without fuzzy. The implementation should apply the default for the missing fuzzy property (0.45). This partial configuration support is a new capability introduced by making properties optional.",
+            "suggestedTest": "test('should use default fuzzy weight when only prefix is provided', () => {\n  const options = { weights: { prefix: 0.9 } };\n  const result = miniSearch.search('query', options);\n  // Verify fuzzyWeight = 0.45 (default) and prefixWeight = 0.9\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 1709-1712: weights as empty object {}",
+            "priority": "high",
+            "reasoning": "An empty weights object {} is valid TypeScript but has no properties. The destructuring with default parameters should handle this gracefully, falling back to defaultSearchOptions.weights for both fuzzy and prefix. This edge case is critical for API robustness.",
+            "suggestedTest": "test('should use all default weights when weights is empty object', () => {\n  const options = { weights: {} };\n  const result = miniSearch.search('query', options);\n  // Verify both fuzzyWeight = 0.45 and prefixWeight = 0.375 (defaults)\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 1709-1712: weights properties explicitly set to undefined",
+            "priority": "medium",
+            "reasoning": "TypeScript allows { fuzzy: undefined, prefix: undefined }. The default parameter assignment (= defaultSearchOptions.weights.fuzzy) should treat explicit undefined the same as missing properties. This is a subtle JavaScript behavior that needs verification.",
+            "suggestedTest": "test('should use defaults when weight properties are explicitly undefined', () => {\n  const options = { weights: { fuzzy: undefined, prefix: undefined } };\n  const result = miniSearch.search('query', options);\n  // Verify fuzzyWeight = 0.45 and prefixWeight = 0.375\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 1709-1712: weights properties set to null",
+            "priority": "medium",
+            "reasoning": "While the TypeScript types don't permit null, JavaScript runtime allows it. If a user passes { fuzzy: null, prefix: null }, the default parameters won't trigger (null !== undefined). This could cause unexpected behavior in the search algorithm and should be tested for defensive programming.",
+            "suggestedTest": "test('should handle null weight values gracefully', () => {\n  const options = { weights: { fuzzy: null as any, prefix: null as any } };\n  // Should either throw a clear error or handle gracefully\n  expect(() => miniSearch.search('query', options)).not.toThrow();\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 1709-1712: weights properties set to 0",
+            "priority": "medium",
+            "reasoning": "Zero is a valid weight value that should disable fuzzy or prefix matching entirely. The default parameter assignment must not treat 0 as falsy and replace it with defaults. This is a critical functional requirement for search behavior customization.",
+            "suggestedTest": "test('should respect zero values for weights', () => {\n  const options = { weights: { fuzzy: 0, prefix: 0 } };\n  const result = miniSearch.search('query', options);\n  // Verify fuzzyWeight = 0 and prefixWeight = 0 (not replaced with defaults)\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "branch",
+            "location": "Line 1709-1712: both weights explicitly provided",
+            "priority": "medium",
+            "reasoning": "When users provide complete weights { fuzzy: 0.7, prefix: 0.5 }, the implementation should use those exact values without touching defaults. This is the happy path that confirms the new implementation doesn't break existing behavior for users who provide full configuration.",
+            "suggestedTest": "test('should use custom weights when both are provided', () => {\n  const options = { weights: { fuzzy: 0.7, prefix: 0.5 } };\n  const result = miniSearch.search('query', options);\n  // Verify fuzzyWeight = 0.7 and prefixWeight = 0.5\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 52-62: JSDoc @default annotations for fuzzy and prefix",
+            "priority": "low",
+            "reasoning": "The JSDoc comments document that fuzzy defaults to 0.45 and prefix to 0.375. While documentation doesn't need testing, it's important to verify that the documented defaults match the actual defaultSearchOptions.weights values used in the implementation to prevent documentation drift.",
+            "suggestedTest": "test('should match documented default values', () => {\n  // Verify defaultSearchOptions.weights.fuzzy === 0.45\n  // Verify defaultSearchOptions.weights.prefix === 0.375\n  expect(defaultSearchOptions.weights.fuzzy).toBe(0.45);\n  expect(defaultSearchOptions.weights.prefix).toBe(0.375);\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 1709-1712: negative weight values",
+            "priority": "low",
+            "reasoning": "While semantically invalid, negative weights are technically allowed by the type system (number includes negatives). The search algorithm may produce unexpected results or errors. Testing boundary conditions helps validate input constraints.",
+            "suggestedTest": "test('should handle negative weight values', () => {\n  const options = { weights: { fuzzy: -0.5, prefix: -0.3 } };\n  // Should either validate and throw, or handle gracefully\n  const result = miniSearch.search('query', options);\n  expect(result).toBeDefined();\n});"
+          },
+          {
+            "type": "edge-case",
+            "location": "Line 1709-1712: extremely large weight values",
+            "priority": "low",
+            "reasoning": "Weight values like Number.MAX_VALUE or Infinity are edge cases that could reveal numeric stability issues in the search scoring algorithm. While unlikely in practice, defensive testing ensures robustness.",
+            "suggestedTest": "test('should handle very large weight values', () => {\n  const options = { weights: { fuzzy: Number.MAX_VALUE, prefix: Infinity } };\n  const result = miniSearch.search('query', options);\n  // Should not cause crashes or infinite loops\n  expect(result).toBeDefined();\n});"
+          }
+        ],
+        "coverageEstimate": 0,
+        "summary": "The file src/MiniSearch.ts has no associated test files. The changes introduce critical branching logic for optional weight parameters with default value assignment. The modification from spread operators to explicit default parameters creates 11 distinct untested code paths, including 5 high-priority scenarios: undefined weights, partial weights (fuzzy-only and prefix-only), empty weights object, and explicit undefined values. The lack of tests for these branches represents a significant risk, as the new optional property behavior could silently break search functionality. Coverage estimate is 0% for the modified code paths. Immediate testing is required to validate default value fallback, partial configuration support, and edge cases like null/zero/negative values."
+      },
+      "refactorings": {
+        "file": "src/MiniSearch.ts",
+        "suggestions": [
+          {
+            "type": "simplify",
+            "location": "Line 1709-1712 (weight destructuring)",
+            "impact": "low",
+            "description": "The destructuring with default parameters can be simplified using nullish coalescing operator (??) for more explicit null/undefined handling and better readability.",
+            "before": "const {\n  fuzzy: fuzzyWeight = defaultSearchOptions.weights.fuzzy,\n  prefix: prefixWeight = defaultSearchOptions.weights.prefix\n} = weights || {}",
+            "after": "const fuzzyWeight = weights?.fuzzy ?? defaultSearchOptions.weights.fuzzy;\nconst prefixWeight = weights?.prefix ?? defaultSearchOptions.weights.prefix;",
+            "benefits": "More explicit handling of undefined/null values using optional chaining and nullish coalescing. Makes it clearer that we're providing fallback values specifically for null/undefined cases, not falsy values."
+          },
+          {
+            "type": "modernize",
+            "location": "SearchOptions type definition (lines 52-63)",
+            "impact": "medium",
+            "description": "Extract the nested weights object into a separate type definition for better reusability, type safety, and to avoid duplication if used elsewhere.",
+            "before": "weights?: {\n  /**\n   * @default 0.45\n   */\n  fuzzy?: number\n  /**\n   * @default 0.375\n   */\n  prefix?: number\n}",
+            "after": "/**\n * Weight configuration for search result scoring\n */\nexport type SearchWeights = {\n  /**\n   * Weight for fuzzy match results\n   * @default 0.45\n   */\n  fuzzy?: number\n  /**\n   * Weight for prefix match results\n   * @default 0.375\n   */\n  prefix?: number\n}\n\n// In SearchOptions:\nweights?: SearchWeights",
+            "benefits": "Improves type reusability and maintainability. Makes the SearchOptions type definition cleaner. Allows the SearchWeights type to be imported and used independently in other parts of the codebase."
+          },
+          {
+            "type": "extract-function",
+            "location": "Lines 1709-1712 (weight resolution logic)",
+            "impact": "medium",
+            "description": "Extract weight resolution logic into a helper function to encapsulate the default merging strategy and improve testability.",
+            "before": "const {\n  fuzzy: fuzzyWeight = defaultSearchOptions.weights.fuzzy,\n  prefix: prefixWeight = defaultSearchOptions.weights.prefix\n} = weights || {}",
+            "after": "// Helper function (add near top of class or in utils):\nprivate resolveSearchWeights(weights?: SearchWeights): Required<SearchWeights> {\n  return {\n    fuzzy: weights?.fuzzy ?? defaultSearchOptions.weights.fuzzy,\n    prefix: weights?.prefix ?? defaultSearchOptions.weights.prefix\n  };\n}\n\n// Usage:\nconst { fuzzy: fuzzyWeight, prefix: prefixWeight } = this.resolveSearchWeights(weights);",
+            "benefits": "Encapsulates the weight resolution logic making it reusable and testable. If weight resolution becomes more complex (e.g., validation, normalization), changes are isolated to one function. Reduces cognitive load in the main search logic."
+          },
+          {
+            "type": "pattern-improvement",
+            "location": "defaultSearchOptions.weights access pattern (lines 1710-1711)",
+            "impact": "low",
+            "description": "Consider using a constant for default weights at module level to avoid repeated property access and improve performance in hot paths.",
+            "before": "const {\n  fuzzy: fuzzyWeight = defaultSearchOptions.weights.fuzzy,\n  prefix: prefixWeight = defaultSearchOptions.weights.prefix\n} = weights || {}",
+            "after": "// At module or class level:\nconst DEFAULT_FUZZY_WEIGHT = 0.45;\nconst DEFAULT_PREFIX_WEIGHT = 0.375;\n\n// Usage:\nconst fuzzyWeight = weights?.fuzzy ?? DEFAULT_FUZZY_WEIGHT;\nconst prefixWeight = weights?.prefix ?? DEFAULT_PREFIX_WEIGHT;",
+            "benefits": "Eliminates nested property access in potentially hot code paths. Makes default values more visible and easier to reference. Creates a single source of truth for these constants that matches the JSDoc @default annotations."
+          },
+          {
+            "type": "simplify",
+            "location": "SearchOptions type formatting (lines 52-63)",
+            "impact": "low",
+            "description": "Add missing semicolons after type properties for consistency with TypeScript style conventions.",
+            "before": "weights?: {\n  /**\n   * @default 0.45\n   */\n  fuzzy?: number\n  /**\n   * @default 0.375\n   */\n  prefix?: number\n}",
+            "after": "weights?: {\n  /**\n   * @default 0.45\n   */\n  fuzzy?: number;\n  /**\n   * @default 0.375\n   */\n  prefix?: number;\n}",
+            "benefits": "Improves code consistency and follows TypeScript best practices. Makes the code more uniform with typical TypeScript codebases that use semicolons."
+          }
+        ],
+        "summary": "The refactored code shows improvement over spread operator merging by making optional properties explicit. Key opportunities include: (1) using nullish coalescing for clearer intent, (2) extracting SearchWeights into a reusable type, (3) creating a dedicated weight resolution helper function for better encapsulation, (4) defining default weight constants at module level to avoid repeated property access, and (5) minor style consistency improvements with semicolons."
+      }
+    }
+  ],
+  "summary": {
+    "totalFiles": 1,
+    "overallScore": 78,
+    "criticalIssues": 0,
+    "highPriorityTests": 4,
+    "refactoringOpportunities": 5
+  },
+  "recommendations": [
+    {
+      "priority": "critical",
+      "category": "Testing",
+      "description": "Add comprehensive test coverage for the new optional weights behavior. The changes introduce critical branching logic with 11 untested code paths, including partial weight configurations (fuzzy-only, prefix-only), undefined/null handling, and edge cases with zero values. Without tests, there's significant risk of silently breaking search functionality.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "Bug Risk",
+      "description": "Replace the logical OR operator (||) with nullish coalescing (??) in the weights destructuring. The current implementation using 'weights || {}' treats empty objects differently than null/undefined, which may not be the intended behavior and could lead to subtle bugs.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "high",
+      "category": "Maintainability",
+      "description": "Resolve the duplicate source of truth for default weight values. The @default JSDoc annotations (0.45 and 0.375) are documented in the type definition but the actual defaults are defined in defaultSearchOptions.weights. Consider extracting these to module-level constants to create a single source of truth.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "category": "Refactoring",
+      "description": "Extract the SearchWeights into a separate exported type definition for better reusability and type safety. This would make the type available for use in other parts of the codebase and improve the clarity of the SearchOptions type.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "category": "Testability",
+      "description": "Consider extracting the weight resolution logic into a dedicated helper function (e.g., resolveSearchWeights). This would encapsulate the default merging strategy, improve testability, and make the code easier to maintain if weight resolution becomes more complex in the future.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    },
+    {
+      "priority": "low",
+      "category": "Documentation",
+      "description": "Document this API change in a CHANGELOG or migration guide. Users should understand that they can now provide partial weights objects like {fuzzy: 0.5} without specifying all properties. This is a positive change but should be communicated clearly.",
+      "files": [
+        "src/MiniSearch.ts"
+      ]
+    }
+  ],
+  "metadata": {
+    "analyzedAt": "2026-09-25T00:00:00.000Z",
+    "duration": 45000,
+    "agentVersions": {
+      "code-quality-analyzer": "1.0.0",
+      "test-coverage-analyzer": "1.0.0",
+      "refactoring-suggester": "1.0.0"
+    }
+  }
+}
