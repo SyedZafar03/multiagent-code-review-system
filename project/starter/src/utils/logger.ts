@@ -87,4 +87,3 @@ export const logAgentStart = (agentName: string, file: string) => {
 export const logAgentComplete = (agentName: string, file: string, duration: number) => {
   logger.debug('Subagent completed', { agent: agentName, file, duration });
 };
-
