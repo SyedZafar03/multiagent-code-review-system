@@ -6,7 +6,10 @@ import { ReportGenerator } from './utils/report-generator.js';
 import { logger } from './utils/logger.js';
 import { ReviewError, formatError } from './utils/error-handler.js';
 // Load environment variables
-dotenv.config();
+// Load environment variables only when not invoked by child test runners
+if (!process.env.VITEST && process.env.NODE_ENV !== 'test') {
+    dotenv.config();
+}
 /**
  * Main entry point for the Claude Multi-Agent Code Review System
  * Usage: npm run dev <owner> <repo> <pr-number>
